@@ -73,6 +73,9 @@ exports.handler = async (event) => {
         icon: `https:${cur.condition.icon}`,
         humidity: cur.humidity,
         wind_kph: cur.wind_kph,
+        feelslike_c: cur.feelslike_c,
+        feelslike_f: cur.feelslike_f,
+        is_day: cur.is_day,
       };
   
       return {

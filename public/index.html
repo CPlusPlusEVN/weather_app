@@ -6,123 +6,290 @@
   <title>Weather</title>
   <style>
     :root {
-      --bg: #0f172a;
-      --card: #1e293b;
       --accent: #38bdf8;
-      --text: #e2e8f0;
-      --muted: #94a3b8;
-      --error: #f87171;
-      --border: #334155;
+      --error: #fecaca;
+      --glass-bg: rgba(15, 23, 42, 0.40);
+      --glass-border: rgba(255, 255, 255, 0.18);
+      --text: #f8fafc;
+      --muted: rgba(248, 250, 252, 0.72);
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
     }
     [data-theme="light"] {
-      --bg: #f1f5f9;
-      --card: #ffffff;
-      --text: #1e293b;
-      --muted: #64748b;
-      --border: #cbd5e1;
+      --glass-bg: rgba(255, 255, 255, 0.55);
+      --glass-border: rgba(255, 255, 255, 0.65);
+      --text: #0f172a;
+      --muted: rgba(15, 23, 42, 0.62);
+      --error: #b91c1c;
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
     }
+
     * { box-sizing: border-box; }
+
+    html, body { height: 100%; }
     body {
       margin: 0;
       min-height: 100vh;
       display: flex;
       align-items: flex-start;
       justify-content: center;
-      padding: 48px 16px;
-      background: var(--bg);
+      padding: 56px 16px;
       color: var(--text);
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-      transition: background 0.3s, color 0.3s;
+      position: relative;
+      overflow-x: hidden;
+      background: linear-gradient(135deg, #2980b9, #6dd5fa, #b2fefa);
+      background-size: 300% 300%;
+      animation: gradientShift 18s ease infinite;
+      transition: background-image 0.8s ease;
     }
-    .app { width: 100%; max-width: 420px; }
-    .header { display: flex; align-items: center; justify-content: center; position: relative; margin: 0 0 20px; }
-    h1 { font-size: 1.5rem; margin: 0; }
+
+    /* Weather-driven backgrounds */
+    body.w-clear-day   { background-image: linear-gradient(135deg, #2980b9, #6dd5fa, #b2fefa); }
+    body.w-clear-night { background-image: linear-gradient(135deg, #0f2027, #203a43, #2c5364); }
+    body.w-rain        { background-image: linear-gradient(135deg, #3a4a5c, #5c6b7d, #1c2733); }
+    body.w-snow        { background-image: linear-gradient(135deg, #83a4d4, #b6fbff, #dfefff); }
+    body.w-storm       { background-image: linear-gradient(135deg, #16191d, #2c3036, #434a52); }
+    body.w-cloudy      { background-image: linear-gradient(135deg, #6b7a8f, #95a3b3, #c4ccd6); }
+    body.w-fog         { background-image: linear-gradient(135deg, #5b6b82, #8794a8, #aeb8c7); }
+
+    @keyframes gradientShift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Animated particle / lightning layers */
+    #fx {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .lightning {
+      position: fixed;
+      inset: 0;
+      background: #ffffff;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .lightning.flash { animation: flash 0.9s ease-out; }
+    @keyframes flash {
+      0%, 100% { opacity: 0; }
+      8%  { opacity: 0.6; }
+      12% { opacity: 0.1; }
+      16% { opacity: 0.5; }
+      22% { opacity: 0; }
+    }
+
+    .app { width: 100%; max-width: 440px; position: relative; z-index: 2; }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin: 0 0 22px;
+    }
+    h1 {
+      font-size: 1.6rem;
+      margin: 0;
+      letter-spacing: 0.5px;
+      color: #fff;
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.35);
+    }
+
     .theme-toggle {
       position: absolute;
       right: 0;
-      width: 40px;
-      height: 40px;
+      width: 42px;
+      height: 42px;
       padding: 0;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: var(--card);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      background: var(--glass-bg);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
       color: var(--text);
       font-size: 1.2rem;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.3s, border-color 0.3s;
+      transition: transform 0.25s ease, background 0.3s ease;
     }
-    .theme-toggle:hover { border-color: var(--accent); }
-    .search { display: flex; gap: 8px; }
+    .theme-toggle:hover { transform: scale(1.08) rotate(-8deg); }
+    .theme-toggle:active { transform: scale(0.95); }
+
+    .search { display: flex; gap: 10px; }
     input {
       flex: 1;
-      padding: 12px 14px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: var(--card);
+      padding: 14px 16px;
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      background: var(--glass-bg);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
       color: var(--text);
       font-size: 1rem;
-      transition: background 0.3s, color 0.3s, border-color 0.3s;
+      transition: box-shadow 0.25s ease, border-color 0.25s ease;
     }
-    input:focus { outline: 2px solid var(--accent); border-color: transparent; }
-    button {
-      padding: 12px 18px;
+    input::placeholder { color: var(--muted); }
+    input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.35);
+    }
+
+    button.primary {
+      padding: 14px 20px;
       border: none;
-      border-radius: 10px;
-      background: var(--accent);
-      color: #0b1120;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+      color: #06283d;
       font-size: 1rem;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
       white-space: nowrap;
+      box-shadow: 0 8px 20px rgba(14, 165, 233, 0.45);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
-    .message { margin-top: 20px; text-align: center; color: var(--muted); }
-    .message.error { color: var(--error); }
-    .card {
-      margin-top: 24px;
-      padding: 24px;
-      background: var(--card);
-      border-radius: 16px;
+    button.primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 26px rgba(14, 165, 233, 0.55);
+    }
+    button.primary:active:not(:disabled) { transform: translateY(0); }
+    button.primary:disabled { opacity: 0.7; cursor: not-allowed; }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(6, 40, 61, 0.35);
+      border-top-color: #06283d;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: -3px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .message {
+      margin-top: 22px;
       text-align: center;
-      transition: background 0.3s, box-shadow 0.3s;
-    }
-    [data-theme="light"] .card { box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .card.hidden { display: none; }
-    .place { font-size: 1.25rem; font-weight: 600; }
-    .region { color: var(--muted); font-size: 0.9rem; margin-top: 2px; }
-    .temp { font-size: 3rem; font-weight: 700; margin: 12px 0 4px; }
-    .condition {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
       color: var(--muted);
+      min-height: 1.2em;
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.2);
     }
-    .condition img { width: 48px; height: 48px; }
+    .message.error { color: var(--error); font-weight: 600; }
+
+    .card {
+      margin-top: 26px;
+      padding: 30px 26px;
+      background: var(--glass-bg);
+      -webkit-backdrop-filter: blur(20px) saturate(140%);
+      backdrop-filter: blur(20px) saturate(140%);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+    .card.hidden { display: none; }
+    .card.show { animation: fadeInUp 0.7s cubic-bezier(0.22, 1, 0.36, 1); }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(28px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .place { font-size: 1.45rem; font-weight: 700; }
+    .region { color: var(--muted); font-size: 0.92rem; margin-top: 3px; }
+
+    .condition-icon {
+      width: 110px;
+      height: 110px;
+      margin: 6px auto -6px;
+      filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
+      animation: float 4s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-10px); }
+    }
+
+    .temp {
+      font-size: 4.2rem;
+      font-weight: 800;
+      line-height: 1;
+      margin: 4px 0 2px;
+      letter-spacing: -2px;
+    }
+    .temp .unit { font-size: 1.8rem; font-weight: 600; vertical-align: top; opacity: 0.85; }
+    .temp-f { color: var(--muted); font-size: 1rem; margin-bottom: 2px; }
+    .condition-text { font-size: 1.05rem; color: var(--text); margin-top: 8px; opacity: 0.9; }
+    .feels { color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
+
     .stats {
       display: flex;
       justify-content: center;
-      gap: 32px;
-      margin-top: 20px;
-      padding-top: 20px;
-      border-top: 1px solid var(--border);
+      gap: 14px;
+      margin-top: 24px;
     }
-    .stat-label { font-size: 0.8rem; color: var(--muted); }
-    .stat-value { font-size: 1.1rem; font-weight: 600; margin-top: 2px; }
+    .stat {
+      flex: 1;
+      padding: 14px 8px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--glass-border);
+      transition: transform 0.25s ease, background 0.25s ease;
+    }
+    [data-theme="light"] .stat { background: rgba(255, 255, 255, 0.35); }
+    .stat:hover { transform: translateY(-4px); }
+    .stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+    .stat-value { font-size: 1.25rem; font-weight: 700; margin-top: 4px; }
+
+    /* Stagger the inner reveal */
+    .card.show .place        { animation: rise 0.6s 0.05s both; }
+    .card.show .region       { animation: rise 0.6s 0.10s both; }
+    .card.show .condition-icon { animation: pop 0.6s 0.15s both, float 4s 0.75s ease-in-out infinite; }
+    .card.show .temp         { animation: rise 0.6s 0.20s both; }
+    .card.show .temp-f       { animation: rise 0.6s 0.25s both; }
+    .card.show .condition-text { animation: rise 0.6s 0.30s both; }
+    .card.show .feels        { animation: rise 0.6s 0.35s both; }
+    .card.show .stat         { animation: rise 0.6s both; }
+    .card.show .stat:nth-child(1) { animation-delay: 0.40s; }
+    .card.show .stat:nth-child(2) { animation-delay: 0.46s; }
+    .card.show .stat:nth-child(3) { animation-delay: 0.52s; }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pop {
+      from { opacity: 0; transform: scale(0.5); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+      }
+    }
   </style>
 </head>
-<body>
+<body class="w-clear-day">
+  <canvas id="fx"></canvas>
+  <div class="lightning" id="lightning"></div>
+
   <main class="app">
     <div class="header">
       <h1>Weather</h1>
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme"></button>
     </div>
+
     <div class="search">
-      <input id="city" type="text" placeholder="Enter a city…" autocomplete="off" />
-      <button id="go">Get weather</button>
+      <input id="city" type="text" placeholder="Search for a city…" autocomplete="off" />
+      <button id="go" class="primary">Get weather</button>
     </div>
 
     <p id="message" class="message"></p>
@@ -130,17 +297,17 @@
     <section id="card" class="card hidden">
       <div class="place" id="place"></div>
       <div class="region" id="region"></div>
-      <div class="temp" id="temp"></div>
-      <div class="condition">
-        <img id="icon" alt="" />
-        <span id="condition"></span>
-      </div>
+      <img id="icon" class="condition-icon" alt="" />
+      <div class="temp"><span id="temp-c">0</span><span class="unit">°C</span></div>
+      <div class="temp-f" id="temp-f"></div>
+      <div class="condition-text" id="condition"></div>
+      <div class="feels" id="feels"></div>
       <div class="stats">
-        <div>
+        <div class="stat">
           <div class="stat-label">Humidity</div>
           <div class="stat-value" id="humidity"></div>
         </div>
-        <div>
+        <div class="stat">
           <div class="stat-label">Wind</div>
           <div class="stat-value" id="wind"></div>
         </div>
@@ -156,13 +323,48 @@
 
     function setLoading(loading) {
       button.disabled = loading;
-      button.textContent = loading ? "Loading…" : "Get weather";
+      button.innerHTML = loading
+        ? '<span class="spinner"></span> Loading…'
+        : "Get weather";
     }
 
     function showMessage(text, isError = false) {
       card.classList.add("hidden");
+      card.classList.remove("show");
       message.textContent = text;
       message.classList.toggle("error", isError);
+    }
+
+    // Map a condition string + day flag to a background theme and particle effect.
+    function classifyWeather(condition, isDay) {
+      const c = (condition || "").toLowerCase();
+      if (/thunder/.test(c))                        return { bg: "w-storm", fx: "storm" };
+      if (/(snow|blizzard|sleet|ice|icy)/.test(c))  return { bg: "w-snow",  fx: "snow"  };
+      if (/(rain|drizzle|shower)/.test(c))          return { bg: "w-rain",  fx: "rain"  };
+      if (/(fog|mist|haze)/.test(c))                return { bg: "w-fog",   fx: "none"  };
+      if (/(cloud|overcast)/.test(c))               return { bg: "w-cloudy", fx: "none" };
+      return { bg: isDay ? "w-clear-day" : "w-clear-night", fx: "none" };
+    }
+
+    const WEATHER_CLASSES = ["w-clear-day", "w-clear-night", "w-rain", "w-snow", "w-storm", "w-cloudy", "w-fog"];
+    function applyWeatherTheme(bg, fx) {
+      document.body.classList.remove(...WEATHER_CLASSES);
+      document.body.classList.add(bg);
+      setFx(fx);
+    }
+
+    // Animate a number counting up to its target.
+    function countUp(el, target) {
+      const duration = 800;
+      const start = performance.now();
+      const from = 0;
+      function tick(now) {
+        const p = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(from + (target - from) * eased);
+        if (p < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
     }
 
     function showResult(data) {
@@ -172,15 +374,25 @@
       document.getElementById("place").textContent = data.name;
       document.getElementById("region").textContent =
         [data.region, data.country].filter(Boolean).join(", ");
-      document.getElementById("temp").textContent =
-        `${Math.round(data.temp_c)}°C / ${Math.round(data.temp_f)}°F`;
       document.getElementById("icon").src = data.icon;
       document.getElementById("icon").alt = data.condition;
+      document.getElementById("temp-f").textContent = `${Math.round(data.temp_f)}°F`;
       document.getElementById("condition").textContent = data.condition;
+      document.getElementById("feels").textContent =
+        `Feels like ${Math.round(data.feelslike_c)}°C`;
       document.getElementById("humidity").textContent = `${data.humidity}%`;
       document.getElementById("wind").textContent = `${data.wind_kph} kph`;
 
+      const theme = classifyWeather(data.condition, data.is_day);
+      applyWeatherTheme(theme.bg, theme.fx);
+
       card.classList.remove("hidden");
+      // restart the entrance animation
+      card.classList.remove("show");
+      void card.offsetWidth;
+      card.classList.add("show");
+
+      countUp(document.getElementById("temp-c"), Math.round(data.temp_c));
     }
 
     async function getWeather() {
@@ -216,27 +428,108 @@
       if (e.key === "Enter") getWeather();
     });
 
+    /* ---------- Theme toggle ---------- */
     const themeToggle = document.getElementById("theme-toggle");
 
     function applyTheme(theme) {
       document.documentElement.setAttribute("data-theme", theme);
       themeToggle.textContent = theme === "dark" ? "☀️" : "🌙";
     }
-
     function getPreferredTheme() {
       const saved = localStorage.getItem("theme");
       if (saved) return saved;
       return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     }
-
     applyTheme(getPreferredTheme());
-
     themeToggle.addEventListener("click", () => {
       const current = document.documentElement.getAttribute("data-theme");
       const next = current === "dark" ? "light" : "dark";
       localStorage.setItem("theme", next);
       applyTheme(next);
     });
+
+    /* ---------- Canvas particle effects (rain / snow / storm) ---------- */
+    const canvas = document.getElementById("fx");
+    const ctx = canvas.getContext("2d");
+    const lightning = document.getElementById("lightning");
+    let particles = [];
+    let fxMode = "none";
+    let raf = null;
+    let stormTimer = null;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    function buildParticles(mode) {
+      particles = [];
+      const rain = mode === "rain" || mode === "storm";
+      const count = mode === "snow" ? 90 : rain ? 160 : 0;
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          len: rain ? 12 + Math.random() * 16 : 0,
+          r: mode === "snow" ? 1 + Math.random() * 3 : 0,
+          vx: mode === "snow" ? -0.5 + Math.random() : 2 + Math.random() * 2,
+          vy: rain ? 9 + Math.random() * 7 : 1 + Math.random() * 1.6,
+          sway: Math.random() * Math.PI * 2,
+        });
+      }
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (fxMode === "rain" || fxMode === "storm") {
+        ctx.strokeStyle = "rgba(190, 210, 235, 0.45)";
+        ctx.lineWidth = 1.3;
+        for (const p of particles) {
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p.x + p.vx, p.y + p.len);
+          ctx.stroke();
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.y > canvas.height) { p.y = -20; p.x = Math.random() * canvas.width; }
+        }
+      } else if (fxMode === "snow") {
+        ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+        for (const p of particles) {
+          p.sway += 0.01;
+          ctx.beginPath();
+          ctx.arc(p.x + Math.sin(p.sway) * 8, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+          p.y += p.vy;
+          p.x += p.vx * 0.3;
+          if (p.y > canvas.height) { p.y = -10; p.x = Math.random() * canvas.width; }
+        }
+      }
+      raf = requestAnimationFrame(render);
+    }
+
+    function setFx(mode) {
+      fxMode = mode;
+      buildParticles(mode);
+      if (raf) cancelAnimationFrame(raf);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (mode !== "none") render();
+
+      // Lightning flashes for storms only
+      if (stormTimer) { clearInterval(stormTimer); stormTimer = null; }
+      if (mode === "storm") {
+        const strike = () => {
+          lightning.classList.remove("flash");
+          void lightning.offsetWidth;
+          lightning.classList.add("flash");
+        };
+        stormTimer = setInterval(() => {
+          if (Math.random() > 0.5) strike();
+        }, 4000);
+      }
+    }
   </script>
 </body>
 </html>
