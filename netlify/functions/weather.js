@@ -28,11 +28,14 @@ exports.handler = async (event) => {
       };
     }
   
+    // forecast.json returns current conditions plus a multi-day forecast.
+    // days=7 is requested; WeatherAPI returns up to whatever the plan allows
+    // (free tier caps at 3), so the UI adapts to however many come back.
     const url =
-      "https://api.weatherapi.com/v1/current.json" +
+      "https://api.weatherapi.com/v1/forecast.json" +
       `?key=${apiKey}` +
       `&q=${encodeURIComponent(city)}` +
-      "&aqi=no";
+      "&days=7&aqi=no&alerts=no";
   
     try {
       const upstream = await fetch(url);
@@ -61,7 +64,19 @@ exports.handler = async (event) => {
   
       const loc = data.location;
       const cur = data.current;
-  
+
+      // Map each forecast day to a compact shape the UI can render directly.
+      const forecast = (data.forecast?.forecastday || []).map((d) => ({
+        date: d.date,
+        maxtemp_c: d.day.maxtemp_c,
+        maxtemp_f: d.day.maxtemp_f,
+        mintemp_c: d.day.mintemp_c,
+        mintemp_f: d.day.mintemp_f,
+        condition: d.day.condition.text,
+        icon: `https:${d.day.condition.icon}`,
+        chance_of_rain: d.day.daily_chance_of_rain,
+      }));
+
       const normalized = {
         name: loc.name,
         region: loc.region,
@@ -76,6 +91,7 @@ exports.handler = async (event) => {
         feelslike_c: cur.feelslike_c,
         feelslike_f: cur.feelslike_f,
         is_day: cur.is_day,
+        forecast,
       };
   
       return {

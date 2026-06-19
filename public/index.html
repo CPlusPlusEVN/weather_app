@@ -248,6 +248,40 @@
     .stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
     .stat-value { font-size: 1.25rem; font-weight: 700; margin-top: 4px; }
 
+    .forecast-title {
+      margin-top: 26px;
+      padding-top: 20px;
+      border-top: 1px solid var(--glass-border);
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      text-align: left;
+    }
+    .forecast {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .fc-day {
+      flex: 0 0 auto;
+      width: 78px;
+      padding: 12px 6px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--glass-border);
+      transition: transform 0.25s ease, background 0.25s ease;
+    }
+    [data-theme="light"] .fc-day { background: rgba(255, 255, 255, 0.35); }
+    .fc-day:hover { transform: translateY(-4px); }
+    .fc-name { font-size: 0.78rem; font-weight: 700; color: var(--muted); }
+    .fc-icon { width: 44px; height: 44px; margin: 4px 0 2px; }
+    .fc-temp { font-size: 0.9rem; font-weight: 700; }
+    .fc-temp .lo { color: var(--muted); font-weight: 500; }
+    .fc-rain { font-size: 0.7rem; color: var(--accent); margin-top: 3px; font-weight: 600; }
+
     /* Stagger the inner reveal */
     .card.show .place        { animation: rise 0.6s 0.05s both; }
     .card.show .region       { animation: rise 0.6s 0.10s both; }
@@ -260,6 +294,8 @@
     .card.show .stat:nth-child(1) { animation-delay: 0.40s; }
     .card.show .stat:nth-child(2) { animation-delay: 0.46s; }
     .card.show .stat:nth-child(3) { animation-delay: 0.52s; }
+    .card.show .forecast-title { animation: rise 0.6s 0.52s both; }
+    .card.show .fc-day { animation: rise 0.6s both; }
     @keyframes rise {
       from { opacity: 0; transform: translateY(14px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -312,6 +348,8 @@
           <div class="stat-value" id="wind"></div>
         </div>
       </div>
+      <div class="forecast-title" id="forecast-title">Forecast</div>
+      <div class="forecast" id="forecast"></div>
     </section>
   </main>
 
@@ -367,6 +405,33 @@
       requestAnimationFrame(tick);
     }
 
+    function renderForecast(days) {
+      const wrap = document.getElementById("forecast");
+      const title = document.getElementById("forecast-title");
+      wrap.innerHTML = "";
+      if (!days || days.length < 2) {
+        title.style.display = "none";
+        wrap.style.display = "none";
+        return;
+      }
+      title.style.display = "";
+      wrap.style.display = "";
+      days.forEach((d, i) => {
+        const label = i === 0
+          ? "Today"
+          : new Date(d.date + "T00:00:00").toLocaleDateString(undefined, { weekday: "short" });
+        const el = document.createElement("div");
+        el.className = "fc-day";
+        el.style.animationDelay = (0.56 + i * 0.06) + "s";
+        el.innerHTML =
+          `<div class="fc-name">${label}</div>` +
+          `<img class="fc-icon" src="${d.icon}" alt="${d.condition}" />` +
+          `<div class="fc-temp">${Math.round(d.maxtemp_c)}° <span class="lo">${Math.round(d.mintemp_c)}°</span></div>` +
+          (d.chance_of_rain > 0 ? `<div class="fc-rain">💧 ${d.chance_of_rain}%</div>` : "");
+        wrap.appendChild(el);
+      });
+    }
+
     function showResult(data) {
       message.textContent = "";
       message.classList.remove("error");
@@ -382,6 +447,8 @@
         `Feels like ${Math.round(data.feelslike_c)}°C`;
       document.getElementById("humidity").textContent = `${data.humidity}%`;
       document.getElementById("wind").textContent = `${data.wind_kph} kph`;
+
+      renderForecast(data.forecast);
 
       const theme = classifyWeather(data.condition, data.is_day);
       applyWeatherTheme(theme.bg, theme.fx);
