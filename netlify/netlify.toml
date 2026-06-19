@@ -8,3 +8,6 @@
   from = "/api/weather"
   to = "/.netlify/functions/weather"
   status = 200
+  [functions]
+  # Modern Node runtime with global fetch available.
+  node_bundler = "esbuild"
