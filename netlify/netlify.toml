@@ -1,0 +1,10 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+# Pretty URL: /api/weather -> the "weather" function.
+# status = 200 makes this a rewrite (transparent), not a redirect.
+[[redirects]]
+  from = "/api/weather"
+  to = "/.netlify/functions/weather"
+  status = 200

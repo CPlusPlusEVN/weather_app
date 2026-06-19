@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --accent: #38bdf8;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --error: #f87171;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 48px 16px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    .app { width: 100%; max-width: 420px; }
+    h1 { font-size: 1.5rem; margin: 0 0 20px; text-align: center; }
+    .search { display: flex; gap: 8px; }
+    input {
+      flex: 1;
+      padding: 12px 14px;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      background: var(--card);
+      color: var(--text);
+      font-size: 1rem;
+    }
+    input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+    button {
+      padding: 12px 18px;
+      border: none;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #0b1120;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .message { margin-top: 20px; text-align: center; color: var(--muted); }
+    .message.error { color: var(--error); }
+    .card {
+      margin-top: 24px;
+      padding: 24px;
+      background: var(--card);
+      border-radius: 16px;
+      text-align: center;
+    }
+    .card.hidden { display: none; }
+    .place { font-size: 1.25rem; font-weight: 600; }
+    .region { color: var(--muted); font-size: 0.9rem; margin-top: 2px; }
+    .temp { font-size: 3rem; font-weight: 700; margin: 12px 0 4px; }
+    .condition {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--muted);
+    }
+    .condition img { width: 48px; height: 48px; }
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #334155;
+    }
+    .stat-label { font-size: 0.8rem; color: var(--muted); }
+    .stat-value { font-size: 1.1rem; font-weight: 600; margin-top: 2px; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>Weather</h1>
+    <div class="search">
+      <input id="city" type="text" placeholder="Enter a city…" autocomplete="off" />
+      <button id="go">Get weather</button>
+    </div>
+
+    <p id="message" class="message"></p>
+
+    <section id="card" class="card hidden">
+      <div class="place" id="place"></div>
+      <div class="region" id="region"></div>
+      <div class="temp" id="temp"></div>
+      <div class="condition">
+        <img id="icon" alt="" />
+        <span id="condition"></span>
+      </div>
+      <div class="stats">
+        <div>
+          <div class="stat-label">Humidity</div>
+          <div class="stat-value" id="humidity"></div>
+        </div>
+        <div>
+          <div class="stat-label">Wind</div>
+          <div class="stat-value" id="wind"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const input = document.getElementById("city");
+    const button = document.getElementById("go");
+    const message = document.getElementById("message");
+    const card = document.getElementById("card");
+
+    function setLoading(loading) {
+      button.disabled = loading;
+      button.textContent = loading ? "Loading…" : "Get weather";
+    }
+
+    function showMessage(text, isError = false) {
+      card.classList.add("hidden");
+      message.textContent = text;
+      message.classList.toggle("error", isError);
+    }
+
+    function showResult(data) {
+      message.textContent = "";
+      message.classList.remove("error");
+
+      document.getElementById("place").textContent = data.name;
+      document.getElementById("region").textContent =
+        [data.region, data.country].filter(Boolean).join(", ");
+      document.getElementById("temp").textContent =
+        `${Math.round(data.temp_c)}°C / ${Math.round(data.temp_f)}°F`;
+      document.getElementById("icon").src = data.icon;
+      document.getElementById("icon").alt = data.condition;
+      document.getElementById("condition").textContent = data.condition;
+      document.getElementById("humidity").textContent = `${data.humidity}%`;
+      document.getElementById("wind").textContent = `${data.wind_kph} kph`;
+
+      card.classList.remove("hidden");
+    }
+
+    async function getWeather() {
+      const city = input.value.trim();
+      if (!city) {
+        showMessage("Please enter a city name.", true);
+        return;
+      }
+
+      setLoading(true);
+      showMessage("");
+
+      try {
+        const res = await fetch(`/api/weather?city=${encodeURIComponent(city)}`);
+        let data = {};
+        try { data = await res.json(); } catch { /* non-JSON body */ }
+
+        if (!res.ok) {
+          showMessage(data.error || "Something went wrong. Please try again.", true);
+          return;
+        }
+
+        showResult(data);
+      } catch {
+        showMessage("Network error. Please check your connection and try again.", true);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    button.addEventListener("click", getWeather);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") getWeather();
+    });
+  </script>
+</body>
+</html>
